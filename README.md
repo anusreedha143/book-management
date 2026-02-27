@@ -3,7 +3,7 @@
 This project is a containerized Go web application with an API and a PostgreSQL database backend. It allows users to manage a reading list of books.
 
 ## Features
-- Add, view, and delete books
+- Add, view books
 - Web frontend and REST API
 - PostgreSQL database
 - Docker Compose setup for easy deployment
