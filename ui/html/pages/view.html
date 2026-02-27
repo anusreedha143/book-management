@@ -1,0 +1,17 @@
+{{define "title"}}Title Goes Here #{{.}}{{end}}
+
+{{define "main"}}
+<div class="book-details">
+  <ul>
+    <li><strong>ID:</strong> {{.ID}}</li>
+    <li><strong>Title:</strong> {{.Title}}</li>
+    <li><strong>Published:</strong> {{.Published}}</li>
+    <li><strong>Pages:</strong> {{.Pages}}</li>
+    <li><strong>Genres:</strong> {{join .Genres ", "}}</li>
+    <li><strong>Rating:</strong> {{.Rating}}</li>
+    <li><form method="POST" action="/books/delete/{{.ID}}" style="display:inline;">
+      <button type="submit" onclick="return confirm('Delete this book?');">Delete</button>
+    </form></li>
+  </ul>
+</div>
+{{end}}

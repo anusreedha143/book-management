@@ -1,0 +1,20 @@
+# BUILD STAGE
+FROM golang:1.25.5-alpine AS builder
+WORKDIR /app
+# Copy go.mod and sum first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+# Argument to decide which binary to build (api or web)
+ARG APP_NAME
+RUN go build -o /main ./cmd/${APP_NAME}
+
+# FINAL STAGE
+FROM alpine:latest
+WORKDIR /root/
+# Copy the binary from builder
+COPY --from=builder /main .
+# Copy static assets/templates if needed (Web app needs /ui)
+COPY --from=builder /app/ui ./ui
+EXPOSE 8080 4000
+CMD ["./main"]
