@@ -6,8 +6,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 # Argument to decide which binary to build (api or web)
-ARG APP_NAME
-RUN go build -o /main ./cmd/${APP_NAME}
+ARG ENTRY_POINT
+RUN go build -o /main ./cmd/${ENTRY_POINT}
 
 # FINAL STAGE
 FROM alpine:latest

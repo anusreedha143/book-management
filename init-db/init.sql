@@ -1,15 +1,15 @@
--- Create user and grant privileges
-DO
-$$
-BEGIN
-   IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'readinglistdbuser') THEN
-      CREATE ROLE readinglistdbuser LOGIN PASSWORD 'vikky';
-   END IF;
-END
-$$;
+-- -- Create user and grant privileges
+-- DO
+-- $$
+-- BEGIN
+--    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'readinglistdbuser') THEN
+--       CREATE ROLE readinglistdbuser LOGIN PASSWORD 'vikky';
+--    END IF;
+-- END
+-- $$;
 
-GRANT ALL PRIVILEGES ON DATABASE readinglist TO readinglistdbuser;
-GRANT ALL ON SCHEMA public TO readinglistdbuser;
+-- GRANT ALL PRIVILEGES ON DATABASE readinglist TO readinglistdbuser;
+-- GRANT ALL ON SCHEMA public TO readinglistdbuser;
 
 -- Create books table if not exists
 CREATE TABLE IF NOT EXISTS books (
@@ -23,14 +23,12 @@ CREATE TABLE IF NOT EXISTS books (
     version integer NOT NULL DEFAULT 1
 );
 
+-- 2. Ensure your DB user owns the table 
+-- (This ensures your Go app can write to it without permission errors)
 ALTER TABLE books OWNER TO readinglistdbuser;
 
--- Create readinglist table if not exists
--- CREATE TABLE IF NOT EXISTS readinglist (
---     id SERIAL PRIMARY KEY,
---     user_id INTEGER,
---     book_id INTEGER REFERENCES books(id),
---     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
--- );
+-- 3. Optional: Add a sample book to verify persistence on first run
+INSERT INTO books (title, published, pages, genres, rating) 
+VALUES ('The Go Programming Language', 2015, 380, '{Education, Programming}', 4.9)
+ON CONFLICT DO NOTHING;
 
--- ALTER TABLE readinglist OWNER TO readinglistdbuser;
