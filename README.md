@@ -9,7 +9,7 @@ This project is a containerized Go web application with an API and a PostgreSQL 
 - Docker Compose setup for easy deployment
 
 ## Prerequisites
-- Docker Desktop (switched to linux containers)
+- Docker Desktop Installed (switched to linux containers)
 
 ## Getting Started
 
