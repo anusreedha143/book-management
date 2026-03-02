@@ -12,7 +12,7 @@ FROM golang:latest AS builder
 # Default work directory in the container
 WORKDIR /app
 # TODO: need to understand what this command does
-ADD . /app
+#ADD . /app
 
 # Copy go.mod and sum first for better caching
 COPY go.mod go.sum ./

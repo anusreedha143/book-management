@@ -9,13 +9,19 @@ on:
       - main
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
+    strategy:
+      # This matrix will run the steps below twice:
+      # 1. With service_name = "api"
+      # 2. With service_name = "web"
+      matrix:
+        service_name: [api, web]
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile.multistage --tag books-management-app:$(date +%s)
+
+    - name: Build Docker Image for ${{ matrix.service_name }}
+      run: docker build . --file Dockerfile.multistage --build-arg ENTRY_POINT=${{ matrix.service_name }} --tag books-management-${{ matrix.service_name }}:$(date +%s)
 
     # - name: Test
     #   run: go test -v ./...
