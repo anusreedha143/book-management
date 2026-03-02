@@ -1,0 +1,21 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+# This will cause the workflow to get triggered on push commits for all branches except main.
+name: Docker Image CI
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile.multistage --tag books-management-app:$(date +%s)
+
+    # - name: Test
+    #   run: go test -v ./...

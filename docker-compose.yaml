@@ -9,6 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d # Loads your existing tables
+    # read about profiles
     ports:
       - "5432:5432"
     healthcheck:
@@ -25,7 +26,8 @@ services:
       dockerfile: Dockerfile.multistage
       args:
         ENTRY_POINT: api
-    container_name: books_management_api
+    # If you want to scale your API service, you should remove the container_name field from the api service definition in your docker-compose.yaml file. This will allow Docker Compose to automatically assign unique names to each instance of the API service when you scale it up.
+    container_name: books_management_apin
     depends_on:
       postgres_db:
         condition: service_healthy

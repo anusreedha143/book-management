@@ -28,6 +28,7 @@ type application struct {
 }
 
 func main() {
+	setUpLogging()
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 4000, "API Server port")
@@ -80,5 +81,12 @@ func main() {
 	logger.Printf("Starting %s server on %s", cfg.env, addr)
 	err = srv.ListenAndServe()
 	logger.Fatal(err)
+}
 
+func setUpLogging() {
+	file, err := os.OpenFile("logs/apilogs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(file)
 }
