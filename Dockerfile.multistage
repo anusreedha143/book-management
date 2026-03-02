@@ -1,6 +1,19 @@
-# BUILD STAGE
-FROM golang:1.25.5-alpine AS builder
+#Multi-stage build (you can have as many stages as you want, but two is usually enough)
+# Intermediate stages can be : lining, unit-testing, static code analysis, etc. and the final stage is the one that will be used to create the final image.
+# Use -target 
+# TODO: add linter and read about Linter
+# TODO: Can we include test files in the docker images? research abiut that
+
+# TODO: Read about static linking (lld) and Dynamic linking 
+
+# First Stage - Choose a base docker image - BUILD STAGE
+FROM golang:latest AS builder
+
+# Default work directory in the container
 WORKDIR /app
+# TODO: need to understand what this command does
+#ADD . /app
+
 # Copy go.mod and sum first for better caching
 COPY go.mod go.sum ./
 RUN go mod download
@@ -9,7 +22,7 @@ COPY . .
 ARG ENTRY_POINT
 RUN go build -o /main ./cmd/${ENTRY_POINT}
 
-# FINAL STAGE
+# FINAL STAGE - use can also use scratch here instead of Alpine
 FROM alpine:latest
 WORKDIR /root/
 # Copy the binary from builder
