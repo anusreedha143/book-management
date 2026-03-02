@@ -66,6 +66,34 @@ Example in `init-db/init.sql`:
 CREATE ROLE your_db_user LOGIN PASSWORD 'your_db_password';
 ```
 
+### 5.Production Mode (Deployment)
+Use this mode to deploy the application on a server. It downloads optimized, pre-built images from Docker Hub instead of building them from source.
+
+Prerequisites
+A server with Docker & Docker Compose installed.
+
+The docker-compose.prod.yml file present on the server.
+
+A .env file present on the server.
+
+How to Deploy
+- Pull the latest images:
+```
+docker compose -f docker-compose.prod.yml pull
+
+```
+- Start the application (Detached mode):
+
+```
+docker compose -f docker-compose.prod.yml up -d
+
+```
+- Update Deployment:
+```
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+
+```
 ## Troubleshooting
 - If you see errors about missing tables or columns, run `docker-compose down -v` to reset the database.
 - Check logs with `docker-compose logs books_management_api` or `docker-compose logs books_management_web_app`.

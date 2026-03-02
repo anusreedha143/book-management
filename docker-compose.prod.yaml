@@ -1,6 +1,6 @@
 services:
   postgres_db:
-    image: postgres:17-alpine
+    image: postgres:alpine
     container_name: reading-list-db-container
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -8,9 +8,8 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db:/docker-entrypoint-initdb.d 
-      # Loads your existing tables
-      # read about profiles
+      # In production, we usually don't mount local scripts unless necessary
+      # - ./init-db:/docker-entrypoint-initdb.d 
     ports:
       - "5432:5432"
     healthcheck:
@@ -22,16 +21,13 @@ services:
       - app_network
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile.multistage
-      args:
-        ENTRY_POINT: api
-    # If you want to scale your API service, you should remove the container_name field from the api service definition in your docker-compose.yaml file. This will allow Docker Compose to automatically assign unique names to each instance of the API service when you scale it up.
+    # CHANGED: No more 'build'. We use the image from Docker Hub.
+    image: anusreedha143/book-management-api:latest
     container_name: books_management_api
     depends_on:
       postgres_db:
         condition: service_healthy
+    # We still need the env file for DB credentials
     env_file: .env
     ports:
       - "4000:4000"
@@ -39,11 +35,8 @@ services:
       - app_network
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.multistage
-      args:
-        ENTRY_POINT: web
+    # CHANGED: We use the web image from Docker Hub.
+    image: anusreedha/book-management-web:latest
     container_name: books_management_web_app
     depends_on:
       - api
