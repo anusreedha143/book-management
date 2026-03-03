@@ -1,0 +1,53 @@
+# .goreleaser.yaml
+version: 2
+
+project_name: book-management
+
+builds:
+  # Configuration for the API Binary
+  - id: api
+    dir: .
+    main: ./cmd/api          # <--- Explicitly points to API main
+    binary: book-management-api
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+
+  # Configuration for the Web Binary
+  - id: web
+    dir: .
+    main: ./cmd/web          # <--- Explicitly points to Web main
+    binary: book-management-web
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .BuildID }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

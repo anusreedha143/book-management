@@ -29,6 +29,7 @@ go.work.sum
 
 # Docker readme file
 DOCKER_GUIDE.md
+RELEASE_PROCESS.md
 
 # Editor/IDE
 # .idea/

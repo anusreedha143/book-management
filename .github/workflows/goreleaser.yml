@@ -11,7 +11,7 @@ on:
 env:
   REGISTRY: docker.io
   # Base name. We will append -api and -web to this later.
-  IMAGE_BASE_NAME: book-management
+  IMAGE_BASE_NAME: anushasreedharala824/book-management
 
 jobs:
   goreleaser:
