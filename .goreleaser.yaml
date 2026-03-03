@@ -37,7 +37,7 @@ builds:
 archives:
   - format: tar.gz
     name_template: >-
-      {{ .ProjectName }}_{{ .BuildID }}_{{ .Os }}_{{ .Arch }}
+      {{ .Binary }}_{{ .Os }}_{{ .Arch }}
 
 checksum:
   name_template: 'checksums.txt'
