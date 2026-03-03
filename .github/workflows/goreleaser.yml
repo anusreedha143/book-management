@@ -44,7 +44,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          version: latest
+          version: "~> v2"  # <--- FORCE it to use version 2.x By explicitly setting version: "~> v2", you force the action to download the latest V2 release (e.g., v2.0.1+), which knows how to read your version: 2 configuration file
           args: release --clean # --rm-dist is deprecated, use --clean
         env:
           GITHUB_TOKEN: ${{ secrets.MYGITHUB_TOKEN }}
