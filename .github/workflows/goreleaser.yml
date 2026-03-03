@@ -11,7 +11,7 @@ on:
 env:
   REGISTRY: docker.io
   # Base name. We will append -api and -web to this later.
-  IMAGE_BASE_NAME: anusreedha/book-management
+  IMAGE_BASE_NAME: book-management
 
 jobs:
   goreleaser:
@@ -56,7 +56,6 @@ jobs:
         id: meta-api
         uses: docker/metadata-action@v5
         with:
-          # Creates anusreedha/book-management-api
           images: ${{ env.IMAGE_BASE_NAME }}-api
           tags: |
             type=ref,event=branch
@@ -82,7 +81,6 @@ jobs:
         id: meta-web
         uses: docker/metadata-action@v5
         with:
-          # Creates anusreedha/book-management-web
           images: ${{ env.IMAGE_BASE_NAME }}-web
           tags: |
             type=ref,event=branch
