@@ -23,6 +23,7 @@ type BookModel struct {
 	DB *sql.DB
 }
 
+// Go treats $1 as "just data", never as "executable code". Using placeholders like $1, $2 etc(Postgres) in your queries, you are already safe from SQL injection
 func (b BookModel) Insert(book *Book) error {
 	query := `
 		INSERT INTO books (title, published, pages, genres, rating)

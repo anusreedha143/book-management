@@ -35,6 +35,14 @@ services:
     env_file: .env
     ports:
       - "4000:4000"
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          ignore:
+            - ui/
+            - .git/
+            - bin/
     networks:
       - app_network
 
@@ -50,6 +58,17 @@ services:
     env_file: .env
     ports:
       - "8080:8080"
+    develop:
+      watch:
+        - action: sync
+          path: ./ui
+          target: /app/ui
+        - action: rebuild
+          path: .
+          ignore:
+            - ui/
+            - .git/
+            - bin/
     networks:
       - app_network
 

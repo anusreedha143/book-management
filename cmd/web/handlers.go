@@ -201,21 +201,163 @@ func (app *application) bookCreateProcess(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (app *application) bookDelete(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+func (app *application) bookEdit(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		app.bookEditForm(w, r)
+	case http.MethodPost:
+		app.bookEditProcess(w, r)
+	default:
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	}
+}
+
+func (app *application) bookEditForm(w http.ResponseWriter, r *http.Request) {
+	// 1. Get ID from URL
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
 		return
 	}
 
-	idStr := strings.TrimPrefix(r.URL.Path, "/books/delete/")
+	book, err := app.readinglist.Get(int64(id))
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	// 3. Render the Template
+	files := []string{
+		"./ui/html/base.html",
+		"./ui/html/partials/nav.html",
+		"./ui/html/pages/edit.html",
+	}
+
+	funcs := template.FuncMap{"join": strings.Join}
+
+	ts, err := template.New("edit.html").Funcs(funcs).ParseFiles(files...)
+	if err != nil {
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+
+	// 4. Pass the fetched book to the template
+	err = ts.ExecuteTemplate(w, "base", book)
+	if err != nil {
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+}
+
+func (app *application) bookEditProcess(w http.ResponseWriter, r *http.Request) {
+	// 1. Parse the form data
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	// 2. Validate and extract the form values
+	idStr := r.Form.Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id < 1 {
 		http.NotFound(w, r)
 		return
 	}
 
+	title := r.Form.Get("title")
+	pages, err := strconv.Atoi(r.Form.Get("pages"))
+	if err != nil || pages < 1 {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	published, err := strconv.Atoi(r.Form.Get("published"))
+	if err != nil || published < 1 {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	// Split by comma instead of space
+	rawGenres := r.Form.Get("genres")
+	// This handles "Fantasy, Sci-Fi" and "Fantasy,Sci-Fi" correctly
+	genres := strings.Split(rawGenres, ",")
+
+	for i := range genres {
+		genres[i] = strings.TrimSpace(genres[i]) // Remove leading/trailing spaces
+	}
+	rating, err := strconv.ParseFloat(r.Form.Get("rating"), 32)
+	if err != nil || rating < 0 {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	// 3. Create the book struct
+	book := struct {
+		Title     string   `json:"title"`
+		Pages     int      `json:"pages"`
+		Published int      `json:"published"`
+		Genres    []string `json:"genres"`
+		Rating    float32  `json:"rating"`
+	}{
+		Title:     title,
+		Pages:     pages,
+		Published: published,
+		Genres:    genres,
+		Rating:    float32(rating),
+	}
+
+	// 4. Send the updated book data to the API
+	data, err := json.Marshal(book)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	req, err := http.NewRequest("PUT", app.readinglist.Endpoint+"/"+idStr, bytes.NewBuffer(data))
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Unexpected status: %s", resp.Status)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	// 5. Redirect back to the book details page
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) bookDelete(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		app.bookDeleteProcess(w, r)
+	default:
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	}
+}
+
+func (app *application) bookDeleteProcess(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+
+	apiURL := app.readinglist.Endpoint + "/" + idStr
+
 	// Send DELETE request to API
-	req, err := http.NewRequest("DELETE", app.readinglist.Endpoint+"/"+idStr, nil)
+	req, err := http.NewRequest(http.MethodDelete, apiURL, nil)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -235,5 +377,6 @@ func (app *application) bookDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 4. Redirect back to home after successful deletion
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

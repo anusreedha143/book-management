@@ -9,9 +9,6 @@
     <li><strong>Pages:</strong> {{.Pages}}</li>
     <li><strong>Genres:</strong> {{join .Genres ", "}}</li>
     <li><strong>Rating:</strong> {{.Rating}}</li>
-    <li><form method="POST" action="/books/delete/{{.ID}}" style="display:inline;">
-      <button type="submit" onclick="return confirm('Delete this book?');">Delete</button>
-    </form></li>
   </ul>
 </div>
 {{end}}

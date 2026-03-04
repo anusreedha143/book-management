@@ -16,6 +16,18 @@
             <td>{{.Pages}}</td>
             <td>{{.Published}}</td>
             <td>{{.Rating}}</td>
+            <td>
+                <form action="/book/delete?id={{.ID}}" method="POST" style="display:inline;">
+                  <button type="submit" class="btn-delete" 
+                    onclick="return confirm('Are you sure you want to delete {{.Title}}?');">
+                   Delete
+                  </button>
+                </form>
+            </td>
+            <td>
+              <a href="/book/edit?id={{.ID}}">Edit</a>
+              <form action="/book/edit?id={{.ID}}" method="POST" style="display:inline;"></form>
+            </td>
         </tr>
         {{end}}
     </table>

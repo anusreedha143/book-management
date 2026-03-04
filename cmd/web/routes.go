@@ -2,7 +2,7 @@ package main
 
 import "net/http"
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
@@ -11,6 +11,8 @@ func (app *application) routes() *http.ServeMux {
 	mux.HandleFunc("/", app.home)
 	mux.HandleFunc("/book/view", app.bookView)
 	mux.HandleFunc("/book/create", app.bookCreate)
+	mux.HandleFunc("/book/delete", app.bookDelete)
+	mux.HandleFunc("/book/edit", app.bookEdit)
 
-	return mux
+	return app.secureHeaders(mux)
 }
