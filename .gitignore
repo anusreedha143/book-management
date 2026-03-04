@@ -31,6 +31,8 @@ go.work.sum
 DOCKER_GUIDE.md
 RELEASE_PROCESS.md
 
+TROUBLESHOOTING.txt
+
 # Editor/IDE
 # .idea/
 # .vscode/
