@@ -2,7 +2,8 @@
 
 {{define "main"}}
 <h1>Edit Book</h1>
-<form action="/book/edit?id={{.ID}}" method="post">
+<div>
+	<form action="/book/edit?id={{.ID}}" method="post">
 	<div>
 		<label for="title">Title</label>
 		<input type="text" name="title" id="title" value="{{.Title}}">
@@ -20,7 +21,7 @@
 
 	<div>
 		<label for="genres">Genres</label>
-		<input type="text" name="genres" id="genres" value="{{.Genres}}">
+		<input type="text" name="genres" id="genres" value="{{join .Genres ", "}}">
 	</div>
 
 	<div>
@@ -30,4 +31,5 @@
 
 	<button type="submit">Save Changes</button>
 </form>
+</div>
 {{end}}

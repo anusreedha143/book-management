@@ -1,0 +1,7 @@
+# Enforce Unix newlines for shell scripts, ensuring they run in Docker
+*.sh text eol=lf
+
+# (Optional) Enforce Unix newlines for other config files just to be safe
+*.yaml text eol=lf
+*.yml text eol=lf
+Dockerfile* text eol=lf
