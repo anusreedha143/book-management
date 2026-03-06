@@ -16,7 +16,7 @@ type Book struct {
 	Rating    float32  `json:"rating"`
 }
 
-type BookResponse struct {
+type BookResponse struct { //test
 	Book *Book `json:"book"`
 }
 
