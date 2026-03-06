@@ -41,7 +41,7 @@ func (b BookModel) Get(id int64) (*Book, error) {
 	}
 
 	query := `
-		SELECT id, created_at, title, published, pages, genres, version
+		SELECT id, created_at, title, published, pages, genres, rating, version
 		FROM books
 		WHERE id = $1`
 
@@ -54,6 +54,7 @@ func (b BookModel) Get(id int64) (*Book, error) {
 		&book.Published,
 		&book.Pages,
 		pq.Array(&book.Genres),
+		&book.Rating,
 		&book.Version,
 	)
 
@@ -72,11 +73,11 @@ func (b BookModel) Get(id int64) (*Book, error) {
 func (b BookModel) Update(book *Book) error {
 	query := `
 		UPDATE books
-		SET title = $1, published = $2, pages = $3, genres = $4, version = version + 1
-		WHERE id = $5 AND version = $6
+		SET title = $1, published = $2, pages = $3, genres = $4, rating = $5, version = version + 1
+		WHERE id = $6 AND version = $7
 		RETURNING version`
 
-	args := []interface{}{book.Title, book.Published, book.Pages, pq.Array(book.Genres), book.ID, book.Version}
+	args := []interface{}{book.Title, book.Published, book.Pages, pq.Array(book.Genres), book.Rating, book.ID, book.Version}
 	return b.DB.QueryRow(query, args...).Scan(&book.Version)
 }
 
