@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,7 +20,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	books, err := app.readinglist.GetAll()
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		// FIX: Tell us WHICH part failed
+		http.Error(w, fmt.Sprintf("API Error: %v", err), 500)
 		return
 	}
 
@@ -30,15 +33,16 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		// FIX: Tell us if the files are missing
+		log.Printf("Template Error: %v", err)
+		http.Error(w, fmt.Sprintf("Template Parsing Error: %v", err), 500)
 		return
 	}
 
 	err = ts.ExecuteTemplate(w, "base", books)
 	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal server error", 500)
+		log.Printf("Template Execution Error: %v", err)
+		http.Error(w, fmt.Sprintf("Template Execution Error: %v", err), 500)
 		return
 	}
 	// fmt.Fprintf(w, "<html><head><title>Reading List</title></head><body><h1>Reading List</h1><ul>")
@@ -51,13 +55,16 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 func (app *application) bookView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
+		log.Printf("ERROR: Invalid ID provided: %s", r.URL.Query().Get("id"))
 		http.NotFound(w, r)
 		return
 	}
 
 	book, err := app.readinglist.Get(int64(id))
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		// LOUD LOG: Tell us if the DB connection died or the ID doesn't exist
+		log.Printf("ERROR: Database Get(%d) failed: %v", id, err)
+		http.Error(w, fmt.Sprintf("Database Error: %v", err), 500)
 		return
 	}
 
@@ -72,15 +79,15 @@ func (app *application) bookView(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.New("showBook").Funcs(funcs).ParseFiles(files...)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Internal Server Error", 500)
+		log.Printf("ERROR: Template Parsing failed for ID %d: %v", id, err)
+		http.Error(w, fmt.Sprintf("Template File Missing: %v", err), 500)
 		return
 	}
 
 	err = ts.ExecuteTemplate(w, "base", book)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Internal Server Error", 500)
+		log.Printf("ERROR: Template Execution failed for ID %d: %v", id, err)
+		http.Error(w, fmt.Sprintf("Template Execution Error: %v", err), 500)
 		return
 	}
 	//fmt.Fprintf(w, "%s (%d)\n", book.Title, book.Pages)
@@ -118,17 +125,6 @@ func (app *application) bookCreateForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (app *application) bookCreateForm(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Fprintf(w, "<html><head><title>Create Book</title></head>"+
-// 		"<body><h1>Create Book</h1><form action=\"/book/create\" method=\"post\">"+
-// 		"<label for=\"title\">Title</label><input type=\"text\" name=\"title\" id=\"title\">"+
-// 		"<label for=\"pages\">Pages</label><input type=\"number\" name=\"pages\" id=\"pages\">"+
-// 		"<label for=\"published\">Published</label><input type=\"number\" name=\"published\" id=\"published\">"+
-// 		"<label for=\"genres\">Genres</label><input type=\"text\" name=\"genres\" id=\"genres\">"+
-// 		"<label for=\"rating\">Rating</label><input type=\"number\" step=\"0.1\" name=\"rating\" id=\"rating\">"+
-// 		"<button type=\"submit\">Create</button></form></body></html>")
-// }
-
 func (app *application) bookCreateProcess(w http.ResponseWriter, r *http.Request) {
 	title := r.PostFormValue("title")
 	if title == "" {
@@ -148,14 +144,16 @@ func (app *application) bookCreateProcess(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	genres := strings.Split(r.PostFormValue("genres"), " ")
+	// Handles multiple spaces or commas in genres better
+	genreInput := r.PostFormValue("genres")
+	genreInput = strings.ReplaceAll(genreInput, ",", " ")
+	genres := strings.Fields(genreInput)
 
 	ratingFloat, err := strconv.ParseFloat(r.PostFormValue("rating"), 32)
 	if err != nil {
-		http.Error(w, "Rating is empty", http.StatusBadRequest)
+		http.Error(w, "Invalid Rating", http.StatusBadRequest)
 		return
 	}
-	rating := float32(ratingFloat)
 
 	book := struct {
 		Title     string   `json:"title"`
@@ -164,22 +162,22 @@ func (app *application) bookCreateProcess(w http.ResponseWriter, r *http.Request
 		Genres    []string `json:"genres"`
 		Rating    float32  `json:"rating"`
 	}{
-		Title:     title,
+		Title:     r.PostFormValue("title"),
 		Pages:     pages,
 		Published: published,
 		Genres:    genres,
-		Rating:    rating,
+		Rating:    float32(ratingFloat),
 	}
 
 	data, err := json.Marshal(book)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
 		return
 	}
 
 	req, err := http.NewRequest("POST", app.readinglist.Endpoint, bytes.NewBuffer(data))
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to create request: %v", err), http.StatusInternalServerError)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -187,15 +185,19 @@ func (app *application) bookCreateProcess(w http.ResponseWriter, r *http.Request
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("API Connection Error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
-		log.Printf("Unexpected status: %s", resp.Status)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	//Capture the API's actual error message
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		log.Printf("API ERROR (%s): %s", resp.Status, string(body))
+
+		// Show the actual API error in the browser for easier debugging
+		http.Error(w, fmt.Sprintf("API rejected create (%s): %s", resp.Status, string(body)), http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -240,12 +242,18 @@ func (app *application) bookEditForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. Pass the fetched book to the template
-	err = ts.ExecuteTemplate(w, "base", book)
+	// 4. Create a buffer to hold the rendered template
+	buf := new(bytes.Buffer)
+
+	err = ts.ExecuteTemplate(buf, "base", book)
 	if err != nil {
+		log.Printf("TEMPLATE ERROR: %v", err)
 		http.Error(w, "Internal Server Error", 500)
 		return
 	}
+
+	// If we got here, rendering was successful. Now send the buffer to the browser.
+	buf.WriteTo(w)
 }
 
 func (app *application) bookEditProcess(w http.ResponseWriter, r *http.Request) {
@@ -278,12 +286,20 @@ func (app *application) bookEditProcess(w http.ResponseWriter, r *http.Request) 
 
 	// Split by comma instead of space
 	rawGenres := r.Form.Get("genres")
-	// This handles "Fantasy, Sci-Fi" and "Fantasy,Sci-Fi" correctly
 	genres := strings.Split(rawGenres, ",")
 
 	for i := range genres {
 		genres[i] = strings.TrimSpace(genres[i]) // Remove leading/trailing spaces
 	}
+
+	var filtered []string
+	for _, g := range genres {
+		if g != "" {
+			filtered = append(filtered, g)
+		}
+	}
+	genres = filtered
+
 	rating, err := strconv.ParseFloat(r.Form.Get("rating"), 32)
 	if err != nil || rating < 0 {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -308,7 +324,7 @@ func (app *application) bookEditProcess(w http.ResponseWriter, r *http.Request) 
 	// 4. Send the updated book data to the API
 	data, err := json.Marshal(book)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(w, "Problem in JSON marshaling", http.StatusInternalServerError)
 		return
 	}
 
