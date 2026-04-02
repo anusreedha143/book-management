@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -14,6 +15,7 @@ type Book struct {
 	Pages     int      `json:"pages"`
 	Genres    []string `json:"genres"`
 	Rating    float32  `json:"rating"`
+	Version   int32    `json:"version"`
 }
 
 type BookResponse struct { //test 123
@@ -75,6 +77,8 @@ func (m *ReadinglistModel) Get(id int64) (*Book, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("DEBUG: Web App fetched book ID %d with Version %d", bookResp.Book.ID, bookResp.Book.Version)
 
 	return bookResp.Book, nil
 }

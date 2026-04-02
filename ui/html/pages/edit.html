@@ -6,17 +6,17 @@
 	<form action="/book/edit?id={{.ID}}" method="post">
 	<div>
 		<label for="title">Title</label>
-		<input type="text" name="title" id="title" value="{{.Title}}">
+		<input type="text" name="title" id="title" value="{{.Title}}" required>
 	</div>
 
 	<div>
 		<label for="pages">Pages</label>
-		<input type="number" name="pages" id="pages" value="{{.Pages}}">
+		<input type="number" name="pages" id="pages" value="{{.Pages}}" required min="1" max="9999">
 	</div>
 
 	<div>
 		<label for="published">Published</label>
-		<input type="number" name="published" id="published" value="{{.Published}}">
+		<input type="number" name="published" id="published" value="{{.Published}}" required min="1000" max="9999" step="1">
 	</div>
 
 	<div>
@@ -26,7 +26,7 @@
 
 	<div>
 		<label for="rating">Rating</label>
-		<input type="number" step="0.1" name="rating" id="rating" value="{{.Rating}}">
+		<input type="number" step="0.1" name="rating" id="rating" value="{{.Rating}}" min="0" max="5" required>
 	</div>
 
 	<button type="submit">Save Changes</button>

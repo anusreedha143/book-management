@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/lib/pq"
@@ -109,12 +110,13 @@ func (b BookModel) Delete(id int64) error {
 
 func (b BookModel) GetAll() ([]*Book, error) {
 	query := `
-	  SELECT * 
+	  SELECT id, created_at, title, published, pages, genres, rating, version
 	  FROM public.books
 	  ORDER BY id`
 
 	rows, err := b.DB.Query(query)
 	if err != nil {
+		log.Printf("ERROR: Database Query failed: %v", err)
 		return nil, err
 	}
 
@@ -136,6 +138,7 @@ func (b BookModel) GetAll() ([]*Book, error) {
 			&book.Version,
 		)
 		if err != nil {
+			log.Printf("ERROR: GetAll Scan failed: %v", err)
 			return nil, err
 		}
 
@@ -143,6 +146,7 @@ func (b BookModel) GetAll() ([]*Book, error) {
 	}
 
 	if err = rows.Err(); err != nil {
+		log.Printf("ERROR: GetAll Rows iteration error: %v", err)
 		return nil, err
 	}
 
