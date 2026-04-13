@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: book-api
+  namespace: book-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: book-api
+  template:
+    metadata:
+      labels:
+        app: book-api
+    spec:
+      imagePullSecrets:
+      - name: stackit-registry-secret
+      containers:
+      - name: api
+        image: registry.onstackit.cloud/book-mgmt/go-web-api:1.0.0
+        ports:
+        - containerPort: 4000
+        env:
+        - name: READINGLIST_DB_DSN
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: DB_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: book-api-service
+  namespace: book-manager
+spec:
+  selector:
+    app: book-api
+  ports:
+  - port: 80
+    targetPort: 4000
+  type: ClusterIP

@@ -36,3 +36,6 @@ TROUBLESHOOTING.txt
 # Editor/IDE
 # .idea/
 # .vscode/
+# Ignore Kubernetes secrets
+/k8s/secret.yaml
+/k8s/registry-secret.yaml
