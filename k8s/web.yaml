@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: book-web
+  namespace: book-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: book-web
+  template:
+    metadata:
+      labels:
+        app: book-web
+    spec:
+      imagePullSecrets:
+      - name: stackit-registry-secret
+      containers:
+      - name: web
+        image: registry.onstackit.cloud/book-mgmt/go-web-app:1.0.0 # Update this path
+        ports:
+        - containerPort: 8080
+        env:
+        - name: READINGLIST_API_ENDPOINT
+          value: "http://book-api-service/v1/books" # Points directly to the API service above
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: book-web-service
+  namespace: book-manager
+spec:
+  selector:
+    app: book-web
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
