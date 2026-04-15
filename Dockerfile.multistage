@@ -12,6 +12,8 @@ FROM golang:1.25.5-alpine AS builder
 # Default work directory in the container
 WORKDIR /app
 # TODO: need to understand what this command does
+# regarding:ADD - ADD and COPY do almost the same thing (copying files from your computer into the container). 
+# However, COPY is the standard, safer command. (which is why I commented out the below line)
 #ADD . /app
 
 # Copy go.mod and sum first for better caching

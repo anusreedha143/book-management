@@ -1,13 +1,35 @@
+// package data
+
+// import "database/sql"
+
+// type Models struct {
+// 	Books BookModel
+// }
+
+// func NewModels(db *sql.DB) Models {
+// 	return Models{
+// 		Books: BookModel{DB: db},
+// 	}
+// }
+
 package data
 
-import "database/sql"
+import (
+	"log"
+
+	"go.mongodb.org/mongo-driver/mongo"
+)
 
 type Models struct {
-	Books BookModel
+	Books BookModel // Assuming your model is called BookModel
 }
 
-func NewModels(db *sql.DB) Models {
+func NewModels(client *mongo.Client, logger *log.Logger) Models {
 	return Models{
-		Books: BookModel{DB: db},
+		// We tell the BookModel exactly which Database and Collection to use
+		Books: BookModel{
+			Collection: client.Database("books").Collection("readinglistdb"),
+			Logger:     logger,
+		},
 	}
 }

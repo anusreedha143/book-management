@@ -1,7 +1,100 @@
+// package main
+
+// import (
+// 	"database/sql"
+// 	"flag"
+// 	"fmt"
+// 	"log"
+// 	"net/http"
+// 	"os"
+// 	"time"
+
+// 	_ "github.com/lib/pq" // Go package for sql postgres driver
+// 	"readinglist.demo.io/internal/data"
+// )
+
+// const version = "1.0.0"
+
+// type config struct {
+// 	port int
+// 	env  string
+// 	dsn  string // connection string to the database
+// }
+
+// type application struct {
+// 	config config
+// 	logger *log.Logger
+// 	models data.Models
+// }
+
+// func main() {
+// 	// setUpLogging()
+// 	var cfg config
+
+// 	flag.IntVar(&cfg.port, "port", 4000, "API Server port")
+// 	flag.StringVar(&cfg.env, "env", "dev", "Environment (dev|stage|prod)")
+// 	flag.StringVar(&cfg.dsn, "db-dsn", os.Getenv("READINGLIST_DB_DSN"), "PostgreSQL DSN")
+// 	flag.Parse()
+// 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+// 	if cfg.dsn == "" {
+// 		cfg.dsn = os.Getenv("READINGLIST_DB_DSN")
+// 		if cfg.dsn == "" {
+// 			cfg.dsn = "postgres://readinglistdbuser:vikky@postgres_db:5432/readinglist?sslmode=disable"
+// 		}
+// 		logger.Printf("Connection string %v", cfg.dsn)
+// 	}
+
+// 	if cfg.dsn == "" {
+// 		logger.Fatal("No database DSN provided")
+// 	}
+
+// 	db, err := sql.Open("postgres", cfg.dsn)
+// 	if err != nil {
+// 		logger.Fatal(err)
+// 	}
+
+// 	defer db.Close()
+
+// 	err = db.Ping()
+// 	if err != nil {
+// 		logger.Fatal(err)
+// 	}
+// 	logger.Printf("database connection pool establised")
+
+// 	app := &application{
+// 		config: cfg,
+// 		logger: logger,
+// 		models: data.NewModels(db),
+// 	}
+
+// 	addr := fmt.Sprintf("0.0.0.0:%d", cfg.port)
+
+// 	srv := &http.Server{
+// 		Addr:         addr,
+// 		Handler:      app.route(),
+// 		IdleTimeout:  time.Minute,
+// 		ReadTimeout:  10 * time.Second,
+// 		WriteTimeout: 30 * time.Second,
+// 	}
+
+// 	logger.Printf("Starting %s server on %s", cfg.env, addr)
+// 	err = srv.ListenAndServe()
+// 	logger.Fatal(err)
+// }
+
+// // func setUpLogging() {
+// // 	file, err := os.OpenFile("logs/apilogs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+// // 	if err != nil {
+// // 		log.Fatal(err)
+// // 	}
+// // 	log.SetOutput(file)
+// // }
+
 package main
 
 import (
-	"database/sql"
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -9,8 +102,12 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/lib/pq" // Go package for sql postgres driver
 	"readinglist.demo.io/internal/data"
+
+	// Import the MongoDB driver packages
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 const version = "1.0.0"
@@ -18,7 +115,7 @@ const version = "1.0.0"
 type config struct {
 	port int
 	env  string
-	dsn  string // connection string to the database
+	dsn  string // Connection string to the database (MongoDB URI)
 }
 
 type application struct {
@@ -28,44 +125,58 @@ type application struct {
 }
 
 func main() {
-	// setUpLogging()
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 4000, "API Server port")
 	flag.StringVar(&cfg.env, "env", "dev", "Environment (dev|stage|prod)")
-	flag.StringVar(&cfg.dsn, "db-dsn", os.Getenv("READINGLIST_DB_DSN"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.dsn, "db-dsn", os.Getenv("READINGLIST_DB_DSN"), "MongoDB URI")
 	flag.Parse()
+
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 	if cfg.dsn == "" {
 		cfg.dsn = os.Getenv("READINGLIST_DB_DSN")
 		if cfg.dsn == "" {
-			cfg.dsn = "postgres://readinglistdbuser:vikky@postgres_db:5432/readinglist?sslmode=disable"
+			// Updated fallback string to a standard local MongoDB URI format
+			cfg.dsn = "mongodb://localhost:27017"
 		}
 		logger.Printf("Connection string %v", cfg.dsn)
 	}
 
 	if cfg.dsn == "" {
-		logger.Fatal("No database DSN provided")
+		logger.Fatal("No database URI provided")
 	}
 
-	db, err := sql.Open("postgres", cfg.dsn)
+	// 1. Create a context with a 10-second timeout for the connection
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 2. Configure and establish the MongoDB connection
+	clientOptions := options.Client().ApplyURI(cfg.dsn)
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	defer db.Close()
+	// 3. Ensure the connection is disconnected when the app shuts down
+	defer func() {
+		if err = client.Disconnect(ctx); err != nil {
+			logger.Fatal(err)
+		}
+	}()
 
-	err = db.Ping()
+	// 4. Ping the database to confirm the connection is alive
+	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Printf("database connection pool establised")
+	logger.Printf("MongoDB connection established successfully")
 
+	// 5. Pass the MongoDB client to your models instead of the SQL db
 	app := &application{
 		config: cfg,
 		logger: logger,
-		models: data.NewModels(db),
+		models: data.NewModels(client, logger), // <--- This will cause an error until we update data.NewModels!
 	}
 
 	addr := fmt.Sprintf("0.0.0.0:%d", cfg.port)
@@ -82,11 +193,3 @@ func main() {
 	err = srv.ListenAndServe()
 	logger.Fatal(err)
 }
-
-// func setUpLogging() {
-// 	file, err := os.OpenFile("logs/apilogs.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	log.SetOutput(file)
-// }

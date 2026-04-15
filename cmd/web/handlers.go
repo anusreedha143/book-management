@@ -53,17 +53,18 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) bookView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil || id < 1 {
+	id := r.URL.Query().Get("id")
+	log.Printf("DEBUG: BookView - Received request for ID: %s", id)
+	if id == "" {
 		log.Printf("ERROR: Invalid ID provided: %s", r.URL.Query().Get("id"))
 		http.NotFound(w, r)
 		return
 	}
 
-	book, err := app.readinglist.Get(int64(id))
+	book, err := app.readinglist.Get(id)
 	if err != nil {
 		// LOUD LOG: Tell us if the DB connection died or the ID doesn't exist
-		log.Printf("ERROR: Database Get(%d) failed: %v", id, err)
+		log.Printf("ERROR: Database Get(%s) failed: %v", id, err)
 		http.Error(w, fmt.Sprintf("Database Error: %v", err), 500)
 		return
 	}
@@ -79,14 +80,14 @@ func (app *application) bookView(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.New("showBook").Funcs(funcs).ParseFiles(files...)
 	if err != nil {
-		log.Printf("ERROR: Template Parsing failed for ID %d: %v", id, err)
+		log.Printf("ERROR: Template Parsing failed for ID %s: %v", id, err)
 		http.Error(w, fmt.Sprintf("Template File Missing: %v", err), 500)
 		return
 	}
 
 	err = ts.ExecuteTemplate(w, "base", book)
 	if err != nil {
-		log.Printf("ERROR: Template Execution failed for ID %d: %v", id, err)
+		log.Printf("ERROR: Template Execution failed for ID %s: %v", id, err)
 		http.Error(w, fmt.Sprintf("Template Execution Error: %v", err), 500)
 		return
 	}
@@ -215,14 +216,16 @@ func (app *application) bookEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) bookEditForm(w http.ResponseWriter, r *http.Request) {
-	// 1. Get ID from URL
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil || id < 1 {
+
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		log.Printf("ERROR: Invalid ID provided: %s", r.URL.Query().Get("id"))
 		http.NotFound(w, r)
 		return
 	}
 
-	book, err := app.readinglist.Get(int64(id))
+	book, err := app.readinglist.Get(id)
+
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -265,11 +268,15 @@ func (app *application) bookEditProcess(w http.ResponseWriter, r *http.Request) 
 
 	// 2. Validate and extract the form values
 	idStr := r.Form.Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id < 1 {
+	if idStr == "" {
 		http.NotFound(w, r)
 		return
 	}
+	// id, err := strconv.Atoi(idStr)
+	// if err != nil || id < 1 {
+	// 	http.NotFound(w, r)
+	// 	return
+	// }
 
 	title := r.Form.Get("title")
 	pages, err := strconv.Atoi(r.Form.Get("pages"))
@@ -364,8 +371,8 @@ func (app *application) bookDelete(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) bookDeleteProcess(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id < 1 {
+	// id, err := strconv.Atoi(idStr)
+	if idStr == "" {
 		http.NotFound(w, r)
 		return
 	}

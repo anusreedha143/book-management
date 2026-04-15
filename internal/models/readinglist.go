@@ -9,13 +9,17 @@ import (
 )
 
 type Book struct {
-	ID        int64    `json:"id"`
+	// 1. Changed to string to accept the MongoDB Hex ID
+	ID        string   `json:"id"`
 	Title     string   `json:"title"`
 	Published int      `json:"published"`
 	Pages     int      `json:"pages"`
 	Genres    []string `json:"genres"`
-	Rating    float32  `json:"rating"`
-	Version   int32    `json:"version"`
+	// 2. Changed to float64 to match MongoDB's 'double' precision
+	Rating float64 `json:"rating"`
+	// 3. Usually, the Web UI doesn't need the Version,
+	// but keep it if you are displaying it.
+	Version int32 `json:"version"`
 }
 
 type BookResponse struct { //test 123
@@ -55,8 +59,9 @@ func (m *ReadinglistModel) GetAll() (*[]Book, error) {
 	return booksResp.Books, nil
 }
 
-func (m *ReadinglistModel) Get(id int64) (*Book, error) {
-	url := fmt.Sprintf("%s/%d", m.Endpoint, id)
+func (m *ReadinglistModel) Get(id string) (*Book, error) {
+	url := fmt.Sprintf("%s/%s", m.Endpoint, id)
+	log.Printf("DEBUG: ReadinglistModel.Get - Fetching book with ID: %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -78,7 +83,7 @@ func (m *ReadinglistModel) Get(id int64) (*Book, error) {
 		return nil, err
 	}
 
-	log.Printf("DEBUG: Web App fetched book ID %d with Version %d", bookResp.Book.ID, bookResp.Book.Version)
+	log.Printf("DEBUG: Web App fetched book ID %s with Version %d", bookResp.Book.ID, bookResp.Book.Version)
 
 	return bookResp.Book, nil
 }

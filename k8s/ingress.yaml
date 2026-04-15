@@ -2,13 +2,13 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: book-ingress
-  namespace: book-manager
+  namespace: book-inventory
   annotations:
     kubernetes.io/ingress.class: nginx
 spec:
   ingressClassName: nginx
   rules:
-  - host: books.stackit.gg # Update with your actual domain/subdomain
+  - host: booksinventory.books.stackit.gg # Update with your actual domain/subdomain
     http:
       paths:
       - path: /
