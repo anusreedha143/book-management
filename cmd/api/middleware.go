@@ -1,26 +1,44 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+	"os"
+	"strings"
+)
 
 func (app *application) enableCORS(next http.Handler) http.Handler {
+	// 1. Read the environment variable
+	trustedOriginsEnv := os.Getenv("CORS_TRUSTED_ORIGINS")
+
+	// 2. Provide a fallback just in case you forget to set it locally
+	if trustedOriginsEnv == "" {
+		trustedOriginsEnv = "http://localhost:5173,http://localhost:4173"
+	}
+
+	// 3. Split the comma-separated string into a Go slice
+	allowedOrigins := strings.Split(trustedOriginsEnv, ",")
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. Allow your local Vue dev server to connect.
-		// When you deploy Vue to the cloud later, you will change this to your real domain.
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		origin := r.Header.Get("Origin")
 
-		// 2. Allow all necessary HTTP methods for CRUD operations
+		// 4. Check if the incoming origin is in our allowed list
+		for _, allowed := range allowedOrigins {
+			// strings.TrimSpace removes any accidental spaces in your env string
+			if origin == strings.TrimSpace(allowed) {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Add("Vary", "Origin")
+				break
+			}
+		}
+
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-
-		// 3. Allow headers that Axios uses to send JSON
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
 
-		// 4. Handle the browser's invisible "Preflight" security check
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		// 5. Move on to the actual route handler
 		next.ServeHTTP(w, r)
 	})
 }
