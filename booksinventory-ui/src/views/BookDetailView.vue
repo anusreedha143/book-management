@@ -51,7 +51,7 @@ onMounted(async () => {
     <p v-else-if="error" style="color: red;">{{ error }}</p>
 
     <div v-else-if="book" class="book-details">
-      <h2>{{ book.title }} #{{ book.id }}</h2>
+      <h2>{{ book.title }}</h2>
       
       <ul>
         <li><strong>Title:</strong> {{ book.title }}</li>

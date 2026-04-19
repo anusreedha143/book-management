@@ -17,6 +17,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "@primevue/themes": "^4.5.4",
     "axios": "^1.15.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.31",

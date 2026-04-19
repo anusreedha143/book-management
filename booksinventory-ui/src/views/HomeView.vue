@@ -22,6 +22,7 @@ const error = ref<string | null>(null)
 onMounted(async () => {
   try {
     const response = await api.get<BooksResponse>('/books')
+    console.log("RAW RESPONSE:", response.data)
     books.value = response.data.books 
   } catch (err: unknown) {
     error.value = "Failed to load books from the API."
