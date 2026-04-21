@@ -9,7 +9,8 @@ import EditBookView from '../views/EditBookView.vue'
 // 2. Define the routes mapping URLs to Components
 const router = createRouter({
   // createWebHistory uses the browser's native History API to create clean URLs without the '#' symbol
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory((import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL),
   routes: [
     {
       path: '/',
