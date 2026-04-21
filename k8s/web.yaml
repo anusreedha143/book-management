@@ -17,12 +17,9 @@ spec:
       - name: stackit-registry-secret
       containers:
       - name: web
-        image: registry.onstackit.cloud/book-inventory/vue-web-app:1.0.3 # Update this path
+        image: registry.onstackit.cloud/book-inventory/vue-web-app:1.0.6 # Update this path
         ports:
         - containerPort: 80 # Ngnix uses port 80 by default
-        # env:
-        # - name: READINGLIST_API_ENDPOINT
-        #   value: "http://book-api-service/v1/books" # Points directly to the API service above
 ---
 apiVersion: v1
 kind: Service
