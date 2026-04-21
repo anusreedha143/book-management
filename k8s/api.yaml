@@ -17,7 +17,7 @@ spec:
       - name: stackit-registry-secret
       containers:
       - name: api
-        image: registry.onstackit.cloud/book-inventory/go-web-api:1.0.0
+        image: registry.onstackit.cloud/book-inventory/go-web-api:2.0.0
         ports:
         - containerPort: 4000
         env:
@@ -26,6 +26,8 @@ spec:
             secretKeyRef:
               name: db-credentials
               key: DB_URL
+        - name: CORS_TRUSTED_ORIGINS
+          value: "http://booksinventory.books.stackit.gg"
 ---
 apiVersion: v1
 kind: Service

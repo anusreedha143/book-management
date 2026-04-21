@@ -33,7 +33,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		// FIX: Tell us if the files are missing
+		// LOUD LOG: Tell us if the files are missing
 		log.Printf("Template Error: %v", err)
 		http.Error(w, fmt.Sprintf("Template Parsing Error: %v", err), 500)
 		return
@@ -45,11 +45,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Template Execution Error: %v", err), 500)
 		return
 	}
-	// fmt.Fprintf(w, "<html><head><title>Reading List</title></head><body><h1>Reading List</h1><ul>")
-	// for _, book := range *books {
-	// 	fmt.Fprintf(w, "<li>%s (%d)</li>", book.Title, book.Pages)
-	// }
-	// fmt.Fprintf(w, "</ul></body></html>")
 }
 
 func (app *application) bookView(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +86,6 @@ func (app *application) bookView(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Template Execution Error: %v", err), 500)
 		return
 	}
-	//fmt.Fprintf(w, "%s (%d)\n", book.Title, book.Pages)
 }
 
 func (app *application) bookCreate(w http.ResponseWriter, r *http.Request) {
@@ -272,11 +266,6 @@ func (app *application) bookEditProcess(w http.ResponseWriter, r *http.Request) 
 		http.NotFound(w, r)
 		return
 	}
-	// id, err := strconv.Atoi(idStr)
-	// if err != nil || id < 1 {
-	// 	http.NotFound(w, r)
-	// 	return
-	// }
 
 	title := r.Form.Get("title")
 	pages, err := strconv.Atoi(r.Form.Get("pages"))

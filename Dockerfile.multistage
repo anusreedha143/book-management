@@ -19,7 +19,10 @@ WORKDIR /app
 # Copy go.mod and sum first for better caching
 COPY go.mod go.sum ./
 RUN go mod download
+
+# copy the rest of the source code
 COPY . .
+
 # Argument to decide which binary to build (api or web)
 ARG ENTRY_POINT
 RUN go build -o /main ./cmd/${ENTRY_POINT}
@@ -29,7 +32,11 @@ FROM alpine:latest
 WORKDIR /root/
 # Copy the binary from builder
 COPY --from=builder /main .
-# Copy static assets/templates if needed (Web app needs /ui)
+# Optionally copy the UI folder ONLY if it exists in the repo 
+# (This prevents crashes if you are just building the API)
 COPY --from=builder /app/ui ./ui
+
+# Note: We expose both for documentation, but Kubernetes/STACKIT will 
+# actually manage the real port binding based on your yaml files!
 EXPOSE 8080 4000
 CMD ["/root/main"]

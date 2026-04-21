@@ -1,3 +1,30 @@
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: book-ingress
+#   namespace: book-inventory
+#   annotations:
+#     kubernetes.io/ingress.class: nginx
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - host: booksinventory.books.stackit.gg # Update with your actual domain/subdomain
+#     http:
+#       paths:
+#       - path: /v1
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: book-api-service # Exposes your API to the public internet
+#             port:
+#               number: 80 # Ensure this matches the service port defined in api.yaml
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: book-web-service
+#             port:
+#               number: 80
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -8,7 +35,8 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: booksinventory.books.stackit.gg # Update with your actual domain/subdomain
+  # Host 1: The Frontend
+  - host: booksinventory.books.stackit.gg
     http:
       paths:
       - path: /
@@ -16,5 +44,17 @@ spec:
         backend:
           service:
             name: book-web-service
+            port:
+              number: 80
+
+  # Host 2: The Backend API
+  - host: api.booksinventory.books.stackit.gg
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: book-api-service
             port:
               number: 80
